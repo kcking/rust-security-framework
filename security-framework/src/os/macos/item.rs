@@ -21,6 +21,9 @@ impl ItemSearchOptionsExt for ItemSearchOptions {
     }
 }
 
+/// Re-export KeyType since it used to live here.
+pub use crate::key::KeyType;
+
 #[cfg(test)]
 mod test {
     use crate::item::*;
