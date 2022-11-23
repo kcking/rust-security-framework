@@ -14,7 +14,7 @@ use core_foundation::error::{CFError, CFErrorRef};
 
 use security_framework_sys::{item::{
     kSecAttrKeyTypeRSA, kSecAttrIsPermanent, kSecAttrLabel, kSecAttrKeyType,
-    kSecAttrKeySizeInBits, kSecPrivateKeyAttrs, kSecValueRef,
+    kSecAttrKeySizeInBits, kSecPrivateKeyAttrs, kSecValueRef, kSecAttrApplicationLabel,
 }, keychain_item::SecItemDelete};
 #[cfg(target_os="macos")]
 use security_framework_sys::item::{
@@ -116,6 +116,16 @@ impl SecKey {
             Err(unsafe { CFError::wrap_under_create_rule(error) })
         } else {
             Ok(unsafe { SecKey::wrap_under_create_rule(sec_key) })
+        }
+    }
+
+    #[cfg(any(feature = "OSX_10_12", target_os = "ios"))]
+    pub fn application_label(&self) -> Vec<u8> {
+        unsafe {
+            let attributes = self.attributes();
+            CFData::wrap_under_get_rule(
+                attributes.get(kSecAttrApplicationLabel.to_void()).cast()
+            ).to_vec()
         }
     }
 
@@ -294,7 +304,7 @@ impl GenerateKeyOptions {
 
     /// Collect options into a CFDictioanry
     pub fn to_dictionary(&self) -> CFDictionary {
-        #[cfg(feature = "OSX_10_15")]
+        #[cfg(any(feature = "OSX_10_15", target_os = "ios"))]
         use security_framework_sys::item::kSecUseDataProtectionKeychain;
         use security_framework_sys::item::{kSecUseKeychain, kSecAttrTokenID, kSecAttrTokenIDSecureEnclave, kSecPublicKeyAttrs};
         let private_attributes = CFMutableDictionary::from_CFType_pairs(&[(
@@ -346,7 +356,7 @@ impl GenerateKeyOptions {
 
         #[cfg(target_os="macos")]
         match &self.location {
-            #[cfg(feature = "OSX_10_15")]
+            #[cfg(any(feature = "OSX_10_15", target_os="ios"))]
             Some(Location::DataProtectionKeychain) =>{
                 attribute_key_values.push(( unsafe{ kSecUseDataProtectionKeychain }.to_void(), CFBoolean::true_value().to_void()));
             }
