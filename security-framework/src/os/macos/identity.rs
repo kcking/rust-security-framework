@@ -29,7 +29,7 @@ impl SecIdentityExt for SecIdentity {
         unsafe {
             let mut identity = ptr::null_mut();
             cvt(SecIdentityCreateWithCertificate(
-                keychains.as_CFTypeRef(),
+                if keychains.len() > 0 {keychains.as_CFTypeRef()} else {ptr::null()},
                 certificate.as_concrete_TypeRef(),
                 &mut identity,
             ))?;
