@@ -135,6 +135,7 @@ pub struct ItemSearchOptions {
     label: Option<CFString>,
     access_group: Option<CFString>,
     pub_key_hash: Option<CFData>,
+    app_label: Option<CFData>,
 }
 
 #[cfg(target_os = "macos")]
@@ -223,6 +224,13 @@ impl ItemSearchOptions {
         self
     }
 
+    /// Search for a key with the given public key hash.
+    #[inline(always)]
+    pub fn application_label(&mut self, app_label: &[u8]) -> &mut Self {
+        self.app_label = Some(CFData::from_buffer(app_label));
+        self
+    }
+
     /// Search for objects.
     pub fn search(&self) -> Result<Vec<SearchResult>> {
         unsafe {
@@ -289,6 +297,13 @@ impl ItemSearchOptions {
                 params.push((
                     CFString::wrap_under_get_rule(kSecAttrPublicKeyHash),
                     pub_key_hash.as_CFType(),
+                ));
+            }
+
+            if let Some(ref app_label) = self.app_label {
+                params.push((
+                    CFString::wrap_under_get_rule(kSecAttrApplicationLabel),
+                    app_label.as_CFType(),
                 ));
             }
 
